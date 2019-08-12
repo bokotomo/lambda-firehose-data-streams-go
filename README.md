@@ -1,1 +1,1 @@
-# lambda-firehose-data-streams-go
+# lambda-firehose-go

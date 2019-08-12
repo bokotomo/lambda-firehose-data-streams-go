@@ -1,0 +1,13 @@
+version: "3.6"
+services:
+  lambda-firehose-go:
+    build:
+      context: ./lambda-firehose-go/
+      dockerfile: Dockerfile
+    container_name: "lambda-firehose-go"
+    volumes:
+      - ../../:/lambda-firehose-go
+    tty: true
+    expose:
+      - 80
+    privileged: true
