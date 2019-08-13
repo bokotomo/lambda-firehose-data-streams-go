@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -18,8 +20,12 @@ type MyResponse struct {
 	Message string `json:"success"`
 }
 
-func putRecord(client *firehose.Firehose, streamName *string) error {
-	data := []byte("firehoseTest!")
+type KinesisEvent struct {
+	Name string `json:"name"`
+}
+
+func putRecord(client *firehose.Firehose, streamName *string, text string) error {
+	data := []byte(text)
 
 	_, err := client.PutRecord(&firehose.PutRecordInput{
 		DeliveryStreamName: streamName,
@@ -38,16 +44,21 @@ func setClient() *firehose.Firehose {
 	})
 }
 
-func hello(event MyEvent) (MyResponse, error) {
+func handler(ctx context.Context, kinesisEvent events.KinesisEvent) {
 	streamName := aws.String("TestFirehose")
 	client := setClient()
-	err := putRecord(client, streamName)
-	if err != nil {
-		return MyResponse{Message: fmt.Sprintf("ERROR %v", err)}, nil
+
+	for _, record := range kinesisEvent.Records {
+		kinesisRecord := record.Kinesis
+		dataBytes := kinesisRecord.Data
+		dataText := string(dataBytes)
+
+		fmt.Printf("%s data: %s\n", record.EventName, dataText)
 	}
-	return MyResponse{Message: fmt.Sprintf("put OK")}, nil
+
+	putRecord(client, streamName, "キネシスから入力")
 }
 
 func main() {
-	lambda.Start(hello)
+	lambda.Start(handler)
 }
